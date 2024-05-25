@@ -6,10 +6,11 @@ from os import getenv
 from aiogram import Bot
 from aiogram import Dispatcher
 from dotenv import load_dotenv
-
+from handlers.registration_handlers import registration_router
 load_dotenv()
 
 dp = Dispatcher()
+dp.include_router(registration_router)
 
 async def main():
     bot = Bot(token=getenv('BOT_TOKEN'), parse_mode=ParseMode.HTML)
