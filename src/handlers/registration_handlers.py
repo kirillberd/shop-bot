@@ -3,6 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from state_form import Form
+from utils.utils import normalize_phone_number, generate_unique_code
 import re
 
 
@@ -10,6 +11,12 @@ registration_router = Router()
 
 @registration_router.message(F.chat.type == 'private', CommandStart())
 async def command_start_handler(message: Message, state: FSMContext):
+    user_state = await state.get_state()
+    
+    #! check if user is already registered. Remove comments later
+    # if user_state == Form.registered:
+    #     await message.answer('Вы уже зарегистрированы. Ваш профиль:')
+    # else:
     await state.set_state(Form.name)
     await message.answer('Приветствую! для начала работы пройдите регистрацию.')
     await message.answer('Введите Ваше имя и фамилию.')
@@ -22,12 +29,17 @@ async def name_message_handler(message: Message, state: FSMContext):
 
 @registration_router.message(Form.phone)
 async def phone_message_handler(message: Message, state: FSMContext):
-    phone_pattern = re.compile(r'^(?:\+7|8)?[-\s]?\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}$')
 
-    if phone_pattern.match(message.text):
-        await state.set_state(Form.birth_date)
-        await state.update_data(phone=message.text)
-        await message.answer('Введите Вашу дату рождения в формате ДД.ММ.ГГГГ')
+    phone_number_normalized = normalize_phone_number(message.text)
+    if phone_number_normalized is not None:
+        # check if user with given phone is already registered
+        existing_user = await state.storage.get_one({'data.phone': phone_number_normalized})
+        if existing_user:
+            await message.answer('Пользователь с таким номером телефона уже зарегистрирован!')
+        else:
+            await state.set_state(Form.birth_date)
+            await state.update_data(phone=phone_number_normalized)
+            await message.answer('Введите Вашу дату рождения в формате ДД.ММ.ГГГГ')
     else:
         await message.answer('Некорректный формат номера телефона.') 
 
@@ -38,6 +50,8 @@ async def birth_date_message_handler(message: Message, state: FSMContext):
     if birth_date_pattern.match(message.text):
         await state.set_state(Form.registered)
         await state.update_data(birth_date=message.text)
-        await message.answer('Вы успешно прошли регистрацию! Дарим Вам 500 приветственных бонусов!')
+        referal_code = generate_unique_code(8)
+        await state.update_data(referal_code=referal_code)
+        await message.answer(f'Вы успешно прошли регистрацию! Дарим Вам 500 приветственных бонусов!\nВаш реферальный код: {referal_code}')
     else:
-        await message.answer('Некорректный формат даты. еу')
+        await message.answer('Некорректный формат даты.')

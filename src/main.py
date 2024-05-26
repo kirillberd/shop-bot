@@ -7,9 +7,12 @@ from aiogram import Bot
 from aiogram import Dispatcher
 from dotenv import load_dotenv
 from handlers.registration_handlers import registration_router
+from storage.storage import MongoStorage
 load_dotenv()
 
-dp = Dispatcher()
+storage = MongoStorage(getenv('DB_URI'), getenv('DB_NAME'), getenv('COLLECTION_NAME'))
+
+dp = Dispatcher(storage=storage)
 dp.include_router(registration_router)
 
 async def main():
