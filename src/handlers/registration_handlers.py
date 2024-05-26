@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from state_form import Form
 from utils.utils import normalize_phone_number, generate_unique_code
+from keyboards.user_keyboards import user_keyboard
 import re
 
 
@@ -52,6 +53,11 @@ async def birth_date_message_handler(message: Message, state: FSMContext):
         await state.update_data(birth_date=message.text)
         referal_code = generate_unique_code(8)
         await state.update_data(referal_code=referal_code)
+        await state.update_data(bonus_points=500)
+        user_data = await state.get_data()
         await message.answer(f'Вы успешно прошли регистрацию! Дарим Вам 500 приветственных бонусов!\nВаш реферальный код: {referal_code}')
+        await message.answer(f"Ваш профиль\nФИ: {user_data.get('name')}\nНомер телефона: {user_data.get('phone')}\nДата рождения: {user_data.get('birth_date')}\nБонусы: {user_data.get('bonus_points')}\nРеферальный код: {user_data.get('referal_code')}", reply_markup=user_keyboard())
+
     else:
         await message.answer('Некорректный формат даты.')
+
