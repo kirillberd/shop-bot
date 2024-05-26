@@ -6,3 +6,7 @@ class Form(StatesGroup):
     phone = State()
     birth_date = State()
     registered = State()
+    # if user has entered name admin
+    admin_start = State()
+    # if user has entered admin password
+    admin_authorized = State()

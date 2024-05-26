@@ -7,6 +7,7 @@ from aiogram import Bot
 from aiogram import Dispatcher
 from dotenv import load_dotenv
 from handlers.registration_handlers import registration_router
+from handlers.keyboard_handlers import keyboard_router
 from storage.storage import MongoStorage
 load_dotenv()
 
@@ -14,6 +15,7 @@ storage = MongoStorage(getenv('DB_URI'), getenv('DB_NAME'), getenv('COLLECTION_N
 
 dp = Dispatcher(storage=storage)
 dp.include_router(registration_router)
+dp.include_router(keyboard_router)
 
 async def main():
     bot = Bot(token=getenv('BOT_TOKEN'), parse_mode=ParseMode.HTML)
