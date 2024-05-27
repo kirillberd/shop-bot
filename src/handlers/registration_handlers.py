@@ -1,11 +1,11 @@
 from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from state_form import Form
 from utils.utils import normalize_phone_number, generate_unique_code
 from keyboards.user_keyboards import user_keyboard
-from keyboards.admin_keyboards import admin_keyboard
+from keyboards.admin_keyboards import admin_keyboard, back_keyboard
 import re
 from os import getenv
 from dotenv import load_dotenv
@@ -17,20 +17,19 @@ registration_router = Router()
 async def command_start_handler(message: Message, state: FSMContext):
     user_state = await state.get_state()
     
-    
-    #! check if user is already registered. Remove comments later
-    # if user_state == Form.registered:
-    #     await message.answer('Вы уже зарегистрированы. Ваш профиль:')
-    # else:
-    await state.set_state(Form.name)
-    await message.answer('Приветствую! для начала работы пройдите регистрацию.')
-    await message.answer('Введите Ваше имя и фамилию.')
+    if user_state == Form.registered:
+        await message.answer('Вы уже зарегистрированы.', reply_markup=user_keyboard())
+    else:
+        await state.set_state(Form.name)
+        await message.answer('Приветствую! для начала работы пройдите регистрацию.', reply_markup=ReplyKeyboardRemove()) 
+        await message.answer('Введите Ваше имя и фамилию.')
+
 
 @registration_router.message(Form.name)
 async def name_message_handler(message: Message, state: FSMContext):
     if message.text.casefold() == 'admin':
         await state.set_state(Form.admin_start)
-        await message.answer('Для авторизации в качестве администратора введите пароль')
+        await message.answer('Для авторизации в качестве администратора введите пароль', reply_markup=back_keyboard())
     else:
         await state.set_state(Form.phone)
         await state.update_data(name=message.text)
@@ -38,7 +37,11 @@ async def name_message_handler(message: Message, state: FSMContext):
 
 @registration_router.message(Form.admin_start)
 async def admin_start_handler(message: Message, state: FSMContext):
-    if message.text == getenv('ADMIN_PASSWORD'):
+    if message.text.casefold() == 'назад':
+        await state.set_state(Form.name)
+        await message.answer('Введите Ваше имя и фамилию', reply_markup=ReplyKeyboardRemove())
+
+    elif message.text == getenv('ADMIN_PASSWORD'):
         await state.update_data(role='admin')
         await state.set_state(Form.admin_authorized)
         await message.answer('Авторизация прошла успешна, вам доступна панель администратора', reply_markup=admin_keyboard())

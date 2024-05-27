@@ -1,14 +1,13 @@
 import asyncio
 import logging
 import sys
-from aiogram.enums import ParseMode
 from os import getenv
-from aiogram import Bot
 from aiogram import Dispatcher
 from dotenv import load_dotenv
 from handlers.registration_handlers import registration_router
 from handlers.keyboard_handlers import keyboard_router
 from storage.storage import MongoStorage
+from handlers.admin_handlers import admin_router
 load_dotenv()
 
 storage = MongoStorage(getenv('DB_URI'), getenv('DB_NAME'), getenv('COLLECTION_NAME'))
@@ -16,9 +15,10 @@ storage = MongoStorage(getenv('DB_URI'), getenv('DB_NAME'), getenv('COLLECTION_N
 dp = Dispatcher(storage=storage)
 dp.include_router(registration_router)
 dp.include_router(keyboard_router)
+dp.include_router(admin_router)
 
 async def main():
-    bot = Bot(token=getenv('BOT_TOKEN'), parse_mode=ParseMode.HTML)
+    from bot.bot import bot
     await dp.start_polling(bot)
 
 

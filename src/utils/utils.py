@@ -1,6 +1,7 @@
 import re
 import secrets
 import string
+import asyncio
 def normalize_phone_number(phone_number):
     # removing all digits except digits
     digits = re.sub(r'\D', '', phone_number)
@@ -22,3 +23,11 @@ def generate_unique_code(length=10):
     # generating random code
     code = ''.join(secrets.choice(characters) for _ in range(length))
     return code
+
+
+async def mail(users: list, message):
+    from bot.bot import bot
+    coros = [bot.send_message(user.get('chat_id'), text=message) for user in users]
+
+    await asyncio.gather(*coros)
+  
